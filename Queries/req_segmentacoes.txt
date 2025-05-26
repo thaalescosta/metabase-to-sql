@@ -1,0 +1,31 @@
+TABELA GANHADORES
+Ganhadores 7 Dias: most recent [position_created] in 7 days; count of [transaction_id] > 1 where [transaction_type] = 'deposit' ; [net_pnl_real] > 0
+Ganhadores 15 Dias: most recent [position_created] in 15 days; count of [transaction_id] > 1 where [transaction_type] = 'deposit' ; [net_pnl_real] > 0
+Ganhadores 30 Dias: most recent [position_created] in 30 days; count of [transaction_id] > 1 where [transaction_type] = 'deposit' ; [net_pnl_real] > 0
+
+TABELA LOSERS
+Perdedores 7 Dias: most recent [position_created] in 7 days; count of [transaction_id] > 1 where [transaction_type] = 'deposit' ; [net_pnl_real] < 0
+Perdedores 15 Dias: most recent [position_created] in 15 days; count of [transaction_id] > 1 where [transaction_type] = 'deposit' ; [net_pnl_real] < 0
+Perdedores 30 Dias: most recent [position_created] in 30 days; count of [transaction_id] > 1 where [transaction_type] = 'deposit' ; [net_pnl_real] < 0
+
+TABELA NOVOS
+Novo - Últimas 24h: [registration_date] was within 48 hours
+Novo - Ganhando na Demo: [registration_date] was within 6 days; count of [transaction_id] = 0 where [transaction_type] = 'deposit'; [training_balance]  > 10000
+Novo - Perdendo na Demo: [registration_date] was within 6 days; count of [transaction_id] = 0 where [transaction_type] = 'deposit'; [training_balance] < 10000
+
+
+Columns from table deposits: transaction_id, transaction_type
+Columns from table trades: position_created, net_pnl_real
+Columns from table users: [registration_date]
+
+Tables deposits and trades are related to users (many to one)
+
+
+TABELA GANHADORES
+"Ganhadores 7 Dias", "Ganhadores 15 Dias", "Ganhadores 30 Dias"
+
+TABELA LOSERS
+"Perdedores 7 Dias", "Perdedores 15 Dias" and "Perdedores 30 Dias"
+
+TABELA NOVOS
+"Novo - Últimas 24h", "Novo - Ganhando na Demo", "Novo - Perdendo na Demo"
