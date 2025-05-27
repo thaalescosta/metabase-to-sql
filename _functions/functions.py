@@ -53,7 +53,7 @@ def load_credentials(service_name, credentials_file="credentials.json"):
     except Exception as e:
         print(f"Error loading credentials: {e}")
         return None
-
+    
 class DataFetcher(ABC):
     def __init__(self, max_retries=3, retry_delay=5, chunk_size_days=30):
         self.max_retries = max_retries
@@ -100,7 +100,7 @@ class DataFetcher(ABC):
 class QuadCodeReportFetcher(DataFetcher):
     def __init__(self, report_config):
         # Use smaller chunks for trading reports (5 days) and larger for deposits (30 days)
-        chunk_size = 7
+        chunk_size = 5
         super().__init__(chunk_size_days=chunk_size)
         self.report_config = report_config
         self.session_id = None
@@ -208,7 +208,7 @@ class QuadCodeReportFetcher(DataFetcher):
             else:
                 stats['failed_chunks'] += 1
             
-            time.sleep(1)
+            time.sleep(2.5)
         
         if all_data:
             final_df = pd.concat(all_data, ignore_index=True)
@@ -216,7 +216,7 @@ class QuadCodeReportFetcher(DataFetcher):
             print(f"Final dataset: {len(final_df):,} records")
             return final_df
         
-        print("📭 No data retrieved")
+        print("No data retrieved")
         return pd.DataFrame()
 
 class QuadCodeUsersFetcher(DataFetcher):
@@ -424,7 +424,7 @@ class DataCleaner:
         """Clean trading data"""
         if trading_df is None or trading_df.empty:
             return pd.DataFrame()
-            
+        
         # Drop unique_id if it exists
         if 'unique_id' in trading_df.columns:
             trading_df = trading_df.drop(columns=['unique_id'])
@@ -437,6 +437,7 @@ class DataCleaner:
             'result_bonus', 'overnight', 'custodial', 'margin_call',
             'dividends'
         ]
+        
         for col in currency_columns:
             if col in trading_df.columns and trading_df[col].dtype == 'object':
                 trading_df[col] = trading_df[col].str.replace("$", "", case=False, regex=False)
@@ -449,9 +450,11 @@ class DataCleaner:
         ]
         trading_df = DataCleaner._safe_astype(trading_df, {col: 'string' for col in string_columns})
         
-        # Convert datetime columns
+        # Convert datetime columns (FIXED - handle timezone-aware data)
         datetime_columns = ['position_created', 'position_closed']
-        trading_df = DataCleaner._safe_astype(trading_df, {col: 'datetime64[ns]' for col in datetime_columns})
+        for col in datetime_columns:
+            if col in trading_df.columns:
+                trading_df[col] = pd.to_datetime(trading_df[col], utc=True, errors='coerce').dt.tz_localize(None)
         
         # Convert numeric columns
         numeric_columns = [
@@ -462,7 +465,11 @@ class DataCleaner:
             'custodial', 'margin_call', 'dividends'
         ]
         trading_df = DataCleaner._safe_astype(trading_df, {col: 'float64' for col in numeric_columns})
-        trading_df = DataCleaner._safe_astype(trading_df, {col: 'float64' for col in currency_columns})
+        
+        # Additional data validation
+        if trading_df.empty:
+            print("Warning: Trading DataFrame is empty after cleaning")
+            return pd.DataFrame()
         
         return trading_df
     
@@ -471,7 +478,8 @@ class DataCleaner:
         """Clean user data"""
         if users_df is None or users_df.empty:
             return pd.DataFrame()
-            
+        
+        users_df.columns = [str(col).strip().lower().replace(" ", "_") for col in users_df.columns]
         # Rename columns if they exist
         if 'id' in users_df.columns:
             users_df = users_df.rename(columns={'id': 'user_id'})

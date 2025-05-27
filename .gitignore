@@ -4,7 +4,7 @@ __pycache__/
 .venv/
 _functions/functions_bkp.py
 .vscode/
-
+*.parquet
 # Credentials and sensitive files
 credentials.json
 
