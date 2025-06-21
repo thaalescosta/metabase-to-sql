@@ -96,9 +96,9 @@ WITH user_deposits AS (
 user_training_balance AS (
     SELECT 
         user_id,
-        SUM(CASE WHEN instrument_type = 'demo' THEN gross_pnl ELSE 0 END) as training_balance
-    FROM trades
-    GROUP BY user_id
+        deposits_count,
+        training_balance
+    FROM users
 )
 
 SELECT 
@@ -106,17 +106,18 @@ SELECT
     u.email,
     u.registered,
     CASE 
-        WHEN u.registered >= DATE_SUB(NOW(), INTERVAL 48 HOUR) THEN 'Novo - Últimas 24h'
-        WHEN utb.training_balance > 10000 AND (ud.deposit_count = 0 OR ud.deposit_count IS NULL) THEN 'Novo - Ganhando na Demo'
-        WHEN utb.training_balance < 10000 AND (ud.deposit_count = 0 OR ud.deposit_count IS NULL) THEN 'Novo - Perdendo na Demo'
-    END as segmentation,
+        WHEN u.registered >= DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 'Novo - Últimas 24h'
+        WHEN utb.training_balance > 10000 AND (utb.deposits_count = 0 OR utb.deposits_count IS NULL) THEN 'Novo - Ganhando na Demo'
+        WHEN utb.training_balance < 10000 AND (utb.deposits_count = 0 OR utb.deposits_count IS NULL) THEN 'Novo - Perdendo na Demo'
+        WHEN utb.training_balance = 10000 AND (utb.deposits_count = 0 OR utb.deposits_count IS NULL) THEN 'Novo - Nunca jogou na demo'
+    END as "Segmentação",
     utb.training_balance
 FROM users u
 LEFT JOIN user_deposits ud ON u.user_id = ud.user_id
 LEFT JOIN user_training_balance utb ON u.user_id = utb.user_id
 WHERE 
-    (u.registered >= DATE_SUB(NOW(), INTERVAL 48 HOUR))
+    (u.registered >= DATE_SUB(NOW(), INTERVAL 1 DAY))
     OR 
-    (u.registered >= DATE_SUB(NOW(), INTERVAL 6 DAY) 
-     AND (ud.deposit_count = 0 OR ud.deposit_count IS NULL)
+    (u.registered >= DATE_SUB(NOW(), INTERVAL 5 DAY) 
+     AND (utb.deposits_count = 0 OR utb.deposits_count IS NULL)
      AND utb.training_balance IS NOT NULL); 

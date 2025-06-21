@@ -1,5 +1,6 @@
 # Specified folders to ignore
 bkp/
+Parquets/
 __pycache__/
 .venv/
 _functions/functions_bkp.py
